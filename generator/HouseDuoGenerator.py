@@ -19,6 +19,10 @@ class HouseDuoGenerator(StaticGraphGenerator):
                  house_nodes: list = None,
                  super_node: int = 4) -> (nx.Graph, list):
         house_nodes = house_nodes if house_nodes else [0, 1, 2, 3, 4]
+        # creating roles
+        roles = [role_start] * 9
+        roles[house_nodes[super_node]] = role_start + 1
+
         house_nodes = [i + node_start for i in house_nodes]
         assert len(house_nodes) == 5
         other_nodes = list(set([i for i in range(node_start, node_start + 9)]) - set(house_nodes))
@@ -36,6 +40,6 @@ class HouseDuoGenerator(StaticGraphGenerator):
         G.add_edges_from(other.edges)
         u, v = random.choice(list(house.nodes)), random.choice(list(other.nodes))
         G.add_edge(u, v)
-        roles = [role_start] * 9
-        roles[house_nodes[super_node]] = role_start + 1
+        # roles = [role_start] * 9
+        # roles[house_nodes[super_node]] = role_start + 1
         return G, roles

@@ -2,6 +2,7 @@ import random
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 
 
 def perturb(G: nx.Graph, n: int = None, p: float = None) -> nx.Graph:
@@ -44,3 +45,58 @@ def dynamic_perturb(graphs: list, p: float) -> list:
                 graphs[t].add_edge(u, v)
             break
     return graphs
+
+
+def save_graphs(graphs: list, roles: list):
+    # saving
+    classes = pd.DataFrame(columns=["txId", "class"])
+    roles_series = pd.to_numeric(pd.Series(roles), downcast="float")
+    nodes_series = pd.to_numeric(pd.Series([i for i in range(len(roles))]), downcast="float")
+    classes["txId"] = nodes_series
+    classes["class"] = roles_series - 1
+    classes.to_csv("elliptic_txs_classes.csv", index=False)
+    print(classes)
+    # saving edgelist of the graph
+    edgelist = pd.DataFrame(columns=["txId1", "txId2", "timestep"])
+    a, b, times = [], [], []
+    for t in range(len(graphs)):
+        graph = graphs[t]
+        for e in graph.edges:
+            a.append(e[0])
+            b.append(e[1])
+            times.append(t)
+
+    a_series = pd.to_numeric(pd.Series(a))
+    b_series = pd.to_numeric(pd.Series(b))
+    t_series = pd.to_numeric(pd.Series(times), downcast="float")
+    edgelist["txId1"] = a_series
+    edgelist["txId2"] = b_series
+    edgelist["timestep"] = t_series
+    edgelist.to_csv("elliptic_txs_edgelist_timed.csv", index=False)
+    edgelist
+
+    # saving time of existence for each node
+    nodetime = pd.DataFrame(columns=["txId", "timestep"])
+    nodes, times = [], []
+    for t in range(len(graphs)):
+        graph = graphs[t]
+        nodes.extend([i for i in range(len(roles))])
+        times.extend([t for _ in range(len(roles))])
+    nodes_times = pd.Series(times)
+    nodes = pd.Series(nodes)
+    nodetime["txId"] = nodes
+    nodetime["timestep"] = nodes_times
+    nodetime.to_csv("elliptic_txs_nodetime.csv", index=False)
+    nodetime
+
+    # saving features (one hot) for each node
+    nodes, times = [], []
+    for t in range(len(graphs)):
+        graph = graphs[t]
+        nodes.extend([i for i in range(len(roles))])
+        times.extend([t for _ in range(len(roles))])
+    nodes = pd.Series(nodes)
+    features = pd.get_dummies(nodes, dtype="float")
+    features.insert(0, "nodes", nodes, True)
+    features.insert(1, "times", times, True)
+    features.to_csv("elliptic_txs_features.csv", header=False, index=False)
